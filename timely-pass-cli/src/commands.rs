@@ -96,28 +96,24 @@ pub async fn get(store_path: PathBuf, id: String) -> Result<()> {
     let passphrase = prompt_passphrase(false)?;
     let mut store = SecretStore::open(&store_path, &passphrase)?;
 
-    let cred = store.get_credential(&id).context("Credential not found")?;
+    let (secret, policy_id, created_at, updated_at, usage_counter) = {
+        let cred = store.get_credential(&id).context("Credential not found")?;
+        (cred.secret.clone(), cred.policy_id.clone(), cred.created_at, cred.updated_at, cred.usage_counter)
+    };
     
     // Evaluate policy if present
-    if let Some(policy_id) = &cred.policy_id {
-        if let Some(policy) = store.get_policy(policy_id) {
+    if let Some(pid) = policy_id {
+        if let Some(policy) = store.get_policy(&pid) {
             let ctx = EvaluationContext {
                 now: Utc::now(),
-                created_at: Some(cred.created_at),
-                last_used_at: Some(cred.updated_at), // This logic might need refinement
-                usage_count: cred.usage_counter,
+                created_at: Some(created_at),
+                last_used_at: Some(updated_at),
+                usage_count: usage_counter,
             };
 
             let eval = policy.evaluate(&ctx);
             match eval.verdict {
-                Verdict::Accept => {
-                    // Update usage counter
-                    // We need to mutate the credential in the store.
-                    // This is tricky because `get_credential` returned a reference (in my SDK design).
-                    // I need to fetch, clone, modify, save.
-                    // Or change SDK to allow updating usage.
-                    // For now, let's just output the secret.
-                },
+                Verdict::Accept => {},
                 v => {
                     println!("Access Denied: {:?}", v);
                     println!("Details: {:?}", eval.details);
@@ -128,18 +124,17 @@ pub async fn get(store_path: PathBuf, id: String) -> Result<()> {
     }
 
     // Output secret (careful with printing bytes)
-    match cred.secret.type_ {
+    match secret.type_ {
         SecretType::Password => {
-             println!("{}", String::from_utf8_lossy(&cred.secret.data));
+             println!("{}", String::from_utf8_lossy(&secret.data));
         },
         _ => {
-            println!("{}", hex::encode(&cred.secret.data));
+            println!("{}", hex::encode(&secret.data));
         }
     }
 
-    // Update usage count (naive implementation: read-modify-write)
-    // We need a way to update the credential.
-    // Let's implement `increment_usage` in SDK later.
+    // Update usage count
+    store.increment_usage(&id)?;
     
     Ok(())
 }
