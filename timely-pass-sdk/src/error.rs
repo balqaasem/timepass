@@ -28,6 +28,9 @@ pub enum Error {
 
     #[error("Invalid period: {0}")]
     InvalidPeriod(String),
+
+    #[error("Store error: {0}")]
+    Store(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
