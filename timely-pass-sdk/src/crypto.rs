@@ -132,3 +132,9 @@ impl MasterKey {
             .map_err(|_| Error::Crypto("Decryption failed".into()))
     }
 }
+
+pub fn generate_random_bytes(len: usize) -> Vec<u8> {
+    let mut bytes = vec![0u8; len];
+    OsRng.fill_bytes(&mut bytes);
+    bytes
+}

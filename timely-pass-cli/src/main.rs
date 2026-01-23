@@ -66,6 +66,13 @@ enum Commands {
 
     /// List credentials
     List,
+
+    /// Remove a credential
+    Remove {
+        /// Credential ID
+        #[arg(long)]
+        id: String,
+    },
 }
 
 #[tokio::main]
@@ -79,6 +86,7 @@ async fn main() -> anyhow::Result<()> {
         Commands::Eval { policy, time } => commands::eval(policy, time).await?,
         Commands::Rotate { id } => commands::rotate(cli.store, id).await?,
         Commands::List => commands::list(cli.store).await?,
+        Commands::Remove { id } => commands::remove(cli.store, id).await?,
     }
 
     Ok(())

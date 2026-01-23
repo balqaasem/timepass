@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
-use timely_pass_sdk::crypto::Secret;
+use timely_pass_sdk::crypto::{Secret, generate_random_bytes};
 use timely_pass_sdk::eval::{EvaluationContext, Verdict};
 use timely_pass_sdk::policy::Policy;
 use timely_pass_sdk::store::{Credential, SecretStore, SecretType};
@@ -45,6 +45,14 @@ pub async fn init(store_path: PathBuf) -> Result<()> {
     Ok(())
 }
 
+pub async fn remove(store_path: PathBuf, id: String) -> Result<()> {
+    let passphrase = prompt_passphrase(false)?;
+    let mut store = SecretStore::open(&store_path, &passphrase)?;
+    store.remove_credential(&id)?;
+    println!("Credential '{}' removed.", id);
+    Ok(())
+}
+
 pub async fn add(
     store_path: PathBuf,
     id: String,
@@ -58,12 +66,8 @@ pub async fn add(
     let secret_data = if read_secret {
         prompt_secret()?
     } else {
-        // Generate random if not provided? Or fail?
-        // PRD says "Create/Update/Delete credentials... Static password, Derived token, Ephemeral key pair"
-        // Let's assume we generate a random 32-byte secret if not provided for now, or just error.
-        // For CLI "add", it usually implies adding an existing one or generating one.
-        // Let's error if not provided for simplicity unless we implement generation.
-        anyhow::bail!("Secret generation not yet implemented, please provide --secret")
+        println!("Generating random 32-byte secret...");
+        generate_random_bytes(32)
     };
 
     let secret_type = match type_.as_str() {
@@ -74,6 +78,7 @@ pub async fn add(
     };
 
     let mut cred = Credential::new(id.clone(), secret_type, secret_data);
+    cred.id = id.clone();
 
     if let Some(path) = policy_path {
         let content = fs::read_to_string(&path).context("Failed to read policy file")?;
