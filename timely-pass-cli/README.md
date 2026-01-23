@@ -30,8 +30,21 @@ timely-pass get --id my-secret
 # List all credentials
 timely-pass list
 
+# Rotate a credential's secret
+timely-pass rotate --id my-secret --new-secret "new-super-secure-password"
+
 # Remove a credential
 timely-pass remove --id my-secret
+
+# Manage Policies
+# Add a policy to the store
+timely-pass policy add --id business-hours --path ./policy.toml
+
+# List stored policies
+timely-pass policy list
+
+# Evaluate a policy against a time
+timely-pass eval --policy ./policy.toml --time "2024-01-01T12:00:00Z"
 ```
 
 ## 🛡️ Security

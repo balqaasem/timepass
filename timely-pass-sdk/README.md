@@ -54,6 +54,28 @@ fn main() -> anyhow::Result<()> {
 }
 ```
 
+### Defining a Policy
+
+```rust
+use timely_pass_sdk::policy::{Policy, Hook, Period};
+use chrono::{Utc, TimeZone};
+
+let policy = Policy {
+    id: "business-hours".to_string(),
+    version: 1,
+    clock_skew_secs: 60,
+    max_attempts: None,
+    single_use: false,
+    enabled: true,
+    hooks: vec![
+        Hook::OnlyWithin(Period::Range {
+            start: Utc.ymd(2024, 1, 1).and_hms(9, 0, 0),
+            end: Utc.ymd(2024, 1, 1).and_hms(17, 0, 0),
+        })
+    ],
+};
+```
+
 ## 🛡️ Security
 
 This SDK is designed with a "Security First" mindset.

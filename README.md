@@ -73,7 +73,7 @@ timely-pass get --id api-key-prod
 ```
 
 ### 4. Apply a Time-Based Policy
-Create a policy file (e.g., `policy.toml`) to restrict access to business hours or a specific timeframe.
+Create a policy file (e.g., `policy.toml`) to restrict access to business hours or a specific timeframe. You can also manage policies directly in the store using `timely-pass policy add`.
 
 **policy.toml**:
 ```toml
