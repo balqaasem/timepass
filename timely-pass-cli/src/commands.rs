@@ -36,11 +36,31 @@ pub(crate) fn open_store_helper(store_path: &PathBuf, passphrase: &Secret) -> Re
     match SecretStore::open(store_path, passphrase) {
         Ok(s) => Ok(s),
         Err(e) => {
-            // Check if it's a NotFound error
-            if let timely_pass_sdk::error::Error::Io(ref io_err) = e {
-                if io_err.kind() == std::io::ErrorKind::NotFound {
-                    anyhow::bail!("Store file not found at {:?}.\nPlease run 'timely-pass init' first to create a new store.", store_path);
-                }
+            // Check specific errors to provide better messages
+            match e {
+                timely_pass_sdk::error::Error::Io(ref io_err) => {
+                    if io_err.kind() == std::io::ErrorKind::NotFound {
+                        anyhow::bail!("Store file not found at {:?}.\nPlease run 'timely-pass init' first to create a new store.", store_path);
+                    }
+                    if io_err.kind() == std::io::ErrorKind::UnexpectedEof {
+                         if let Ok(metadata) = std::fs::metadata(store_path) {
+                             if metadata.len() == 0 {
+                                 anyhow::bail!("Store file at {:?} is empty.\nPlease delete it and run 'timely-pass init' to create a new store.", store_path);
+                             }
+                         }
+                    }
+                },
+                timely_pass_sdk::error::Error::Serialization(ref bin_err) => {
+                    // Check if it's an IO error wrapped in Serialization (common with bincode)
+                    if let bincode::ErrorKind::Io(ref io_err) = **bin_err {
+                        if io_err.kind() == std::io::ErrorKind::UnexpectedEof {
+                             anyhow::bail!("Store file at {:?} is corrupted (incomplete data).\nPlease delete it and run 'timely-pass init' again.", store_path);
+                        }
+                    }
+                    // General corruption message
+                    anyhow::bail!("Store file at {:?} is corrupted or invalid: {}\nPlease delete it and run 'timely-pass init' again.", store_path, bin_err);
+                },
+                _ => {}
             }
             Err(e.into())
         }
