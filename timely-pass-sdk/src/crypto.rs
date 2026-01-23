@@ -49,7 +49,10 @@ impl MasterKey {
 
     pub fn derive_from_passphrase(passphrase: &Secret, salt: Option<&[u8]>) -> Result<(Self, Vec<u8>)> {
         let salt = match salt {
-            Some(s) => SaltString::encode_b64(s).map_err(|e| Error::Crypto(e.to_string()))?,
+            Some(s) => {
+                let s_str = std::str::from_utf8(s).map_err(|_| Error::Crypto("Invalid salt utf8".into()))?;
+                SaltString::from_b64(s_str).map_err(|e| Error::Crypto(e.to_string()))?
+            },
             None => SaltString::generate(&mut OsRng),
         };
 
