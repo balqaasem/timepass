@@ -79,6 +79,13 @@ enum Commands {
         #[command(subcommand)]
         command: PolicyCommands,
     },
+
+    /// Upgrade the CLI
+    Upgrade {
+        /// Specific version to upgrade to
+        #[arg(long)]
+        version: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -168,6 +175,7 @@ async fn main() -> anyhow::Result<()> {
                 commands::policy_update(cli.store, id, enable, disable, skew, timezone, max_attempts, single_use, multi_use).await?
             },
         },
+        Commands::Upgrade { version } => commands::upgrade(version).await?,
     }
 
     Ok(())

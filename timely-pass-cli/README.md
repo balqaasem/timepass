@@ -45,6 +45,13 @@ timely-pass policy list
 
 # Evaluate a policy against a time
 timely-pass eval --policy ./policy.toml --time "2024-01-01T12:00:00Z"
+
+# Upgrade the CLI
+# Upgrade to the latest version
+timely-pass upgrade
+
+# Upgrade to a specific version
+timely-pass upgrade --version 0.2.0
 ```
 
 ## 🛡️ Security

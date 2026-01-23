@@ -379,3 +379,27 @@ pub async fn policy_update(
     }
     Ok(())
 }
+
+pub async fn upgrade(version: Option<String>) -> Result<()> {
+    println!("Upgrading timely-pass-cli...");
+
+    let mut cmd = std::process::Command::new("cargo");
+    cmd.arg("install");
+    cmd.arg("timely-pass-cli");
+
+    if let Some(v) = version {
+        println!("Target version: {}", v);
+        cmd.arg("--version");
+        cmd.arg(v);
+    }
+
+    let status = cmd.status().context("Failed to execute cargo install")?;
+
+    if status.success() {
+        println!("Upgrade completed successfully.");
+    } else {
+        anyhow::bail!("Upgrade failed with exit code: {:?}", status.code());
+    }
+
+    Ok(())
+}
