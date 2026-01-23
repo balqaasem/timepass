@@ -45,7 +45,16 @@ Launch the interactive mode:
 timely-pass tui
 ```
 
-#### Key Bindings
+#### Navigation & Global Keys
+
+| Key | Action |
+| :--- | :--- |
+| `1` | Switch to **Credentials** Tab |
+| `2` | Switch to **Policies** Tab |
+| `3` | Switch to **Audit Log** Tab |
+| `q` | Quit application |
+
+#### Credentials Tab (Tab 1)
 
 | Key | Action |
 | :--- | :--- |
@@ -55,8 +64,26 @@ timely-pass tui
 | `/` | **Search** / Filter list by ID |
 | `c` | **Copy** secret to clipboard (securely) |
 | `Enter` | **Reveal/Hide** secret details |
-| `Esc` | Cancel action / Clear search / Quit |
-| `q` | Quit application |
+| `E` | **Export** selected credential to JSON |
+
+#### Policies Tab (Tab 2)
+
+| Key | Action |
+| :--- | :--- |
+| `a` | **Add** a new policy (opens wizard) |
+| `d` / `Delete` | **Delete** selected policy |
+| `e` | **Enable/Disable** selected policy |
+| `Enter` | **Edit** selected policy |
+| `/` | **Search** / Filter policies |
+| `E` | **Export** selected policy to JSON |
+
+#### Audit Log Tab (Tab 3)
+
+| Key | Action |
+| :--- | :--- |
+| `/` | **Search** / Filter logs |
+| `E` | **Export** full audit log to JSON |
+
 
 ## 🛡️ Security
 
