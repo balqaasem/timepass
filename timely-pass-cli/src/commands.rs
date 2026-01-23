@@ -32,6 +32,21 @@ fn prompt_secret() -> Result<Vec<u8>> {
     Ok(secret.into_bytes())
 }
 
+fn open_store_helper(store_path: &PathBuf, passphrase: &Secret) -> Result<SecretStore> {
+    match SecretStore::open(store_path, passphrase) {
+        Ok(s) => Ok(s),
+        Err(e) => {
+            // Check if it's a NotFound error
+            if let timely_pass_sdk::error::Error::Io(ref io_err) = e {
+                if io_err.kind() == std::io::ErrorKind::NotFound {
+                    anyhow::bail!("Store file not found at {:?}.\nPlease run 'timely-pass init' first to create a new store.", store_path);
+                }
+            }
+            Err(e.into())
+        }
+    }
+}
+
 pub async fn init(store_path: PathBuf) -> Result<()> {
     if store_path.exists() {
         anyhow::bail!("Store already exists at {:?}", store_path);
@@ -47,7 +62,7 @@ pub async fn init(store_path: PathBuf) -> Result<()> {
 
 pub async fn remove(store_path: PathBuf, id: String) -> Result<()> {
     let passphrase = prompt_passphrase(false)?;
-    let mut store = SecretStore::open(&store_path, &passphrase)?;
+    let mut store = open_store_helper(&store_path, &passphrase)?;
     store.remove_credential(&id)?;
     println!("Credential '{}' removed.", id);
     Ok(())
@@ -61,7 +76,7 @@ pub async fn add(
     read_secret: bool,
 ) -> Result<()> {
     let passphrase = prompt_passphrase(false)?;
-    let mut store = SecretStore::open(&store_path, &passphrase)?;
+    let mut store = open_store_helper(&store_path, &passphrase)?;
 
     let secret_data = if read_secret {
         prompt_secret()?
@@ -99,7 +114,7 @@ pub async fn add(
 
 pub async fn get(store_path: PathBuf, id: String) -> Result<()> {
     let passphrase = prompt_passphrase(false)?;
-    let mut store = SecretStore::open(&store_path, &passphrase)?;
+    let mut store = open_store_helper(&store_path, &passphrase)?;
 
     let (secret, policy_id, created_at, updated_at, usage_counter) = {
         let cred = store.get_credential(&id).context("Credential not found")?;
@@ -169,7 +184,7 @@ pub async fn eval(policy_path: PathBuf, time: Option<String>) -> Result<()> {
 
 pub async fn list(store_path: PathBuf) -> Result<()> {
     let passphrase = prompt_passphrase(false)?;
-    let store = SecretStore::open(&store_path, &passphrase)?;
+    let store = open_store_helper(&store_path, &passphrase)?;
 
     let creds = store.list_credentials();
     if creds.is_empty() {
@@ -186,7 +201,7 @@ pub async fn list(store_path: PathBuf) -> Result<()> {
 
 pub async fn rotate(store_path: PathBuf, id: String) -> Result<()> {
     let passphrase = prompt_passphrase(false)?;
-    let mut store = SecretStore::open(&store_path, &passphrase)?;
+    let mut store = open_store_helper(&store_path, &passphrase)?;
     
     // Check if exists
     let _ = store.get_credential(&id).context("Credential not found")?;
